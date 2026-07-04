@@ -1,5 +1,5 @@
 -- ============================================================================
--- WeatherSync - configuration
+-- Luman Weather - configuration
 -- Full documentation: docs/getting-started/configuration.md
 -- ============================================================================
 

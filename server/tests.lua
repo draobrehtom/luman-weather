@@ -1,5 +1,5 @@
 -- ============================================================================
--- WeatherSync - server test suite
+-- Luman Weather - server test suite
 --
 -- Console commands (only when Config.enableTests = true):
 --   weathertest              - read-only server tests
@@ -13,11 +13,11 @@ if not Config.enableTests then
     return
 end
 
-local log = WeatherSync.log
+local log = LumanWeather.log
 local pendingClientTests = {}
 
-RegisterNetEvent("weathersync:clientTestResult")
-AddEventHandler("weathersync:clientTestResult", function(line)
+RegisterNetEvent("luman-weather:clientTestResult")
+AddEventHandler("luman-weather:clientTestResult", function(line)
     local src = tonumber(source)
 
     -- Only echo results from players we actually asked to run tests
@@ -79,7 +79,7 @@ local function runServerTestSuite(full)
 
         -- S3: active weather pattern is consistent
         do
-            local pattern = WeatherSync.getWeatherPattern()
+            local pattern = LumanWeather.getWeatherPattern()
             local ok, detail = true, nil
 
             for weather, choices in pairs(pattern) do
@@ -103,7 +103,7 @@ local function runServerTestSuite(full)
 
         -- S4: forecast structure
         do
-            local forecast = WeatherSync.getForecast()
+            local forecast = LumanWeather.getForecast()
             local ok = #forecast == Config.maxForecast + 1
             local detail = string.format("%d entries (expected %d)", #forecast, Config.maxForecast + 1)
 
@@ -116,8 +116,8 @@ local function runServerTestSuite(full)
                 end
             end
 
-            if ok and forecast[1].weather ~= WeatherSync.getWeather() then
-                ok, detail = false, string.format("first entry %s != current weather %s", forecast[1].weather, WeatherSync.getWeather())
+            if ok and forecast[1].weather ~= LumanWeather.getWeather() then
+                ok, detail = false, string.format("first entry %s != current weather %s", forecast[1].weather, LumanWeather.getWeather())
             end
 
             report("S4 forecast", ok, detail)
@@ -125,12 +125,12 @@ local function runServerTestSuite(full)
 
         -- S5: nextWeather only produces known weather types
         do
-            local pattern = WeatherSync.getWeatherPattern()
+            local pattern = LumanWeather.getWeatherPattern()
             local ok, detail = true, nil
 
             for weather in pairs(pattern) do
                 for i = 1, 50 do
-                    local nw = WeatherSync.peekNextWeather(weather)
+                    local nw = LumanWeather.peekNextWeather(weather)
 
                     if not pattern[nw] then
                         ok, detail = false, string.format("%s -> %s which has no pattern entry", weather, tostring(nw))
@@ -147,14 +147,14 @@ local function runServerTestSuite(full)
         end
 
         -- S6: time progression at the configured rate
-        if WeatherSync.getState().timeFrozen then
+        if LumanWeather.getState().timeFrozen then
             skip("S6 time progression", "time is frozen")
         else
-            local t1 = WeatherSync.getTimeSeconds()
+            local t1 = LumanWeather.getTimeSeconds()
 
             Wait(3000)
 
-            local state = WeatherSync.getState()
+            local state = LumanWeather.getState()
             local scale = state.timescale == 0 and 1 or state.timescale
             local advance = (state.time - t1) % WEEK_SECONDS
             local expected = 3 * scale
@@ -167,64 +167,64 @@ local function runServerTestSuite(full)
         if full then
             -- S7: time set/restore
             do
-                local before = WeatherSync.getState()
+                local before = LumanWeather.getState()
                 local t0 = GetGameTimer()
                 local target = DHMSToTime(2, 3, 45, 0)
 
-                WeatherSync.setTime(2, 3, 45, 0, 0, false)
+                LumanWeather.setTime(2, 3, 45, 0, 0, false)
 
-                report("S7 time set", math.abs(WeatherSync.getTimeSeconds() - target) <= 2,
-                    string.format("set %s, now %s", FormatTime(target), FormatTime(WeatherSync.getTimeSeconds())))
+                report("S7 time set", math.abs(LumanWeather.getTimeSeconds() - target) <= 2,
+                    string.format("set %s, now %s", FormatTime(target), FormatTime(LumanWeather.getTimeSeconds())))
 
                 -- Restore, compensating for real time spent testing
                 local scale = before.timescale == 0 and 1 or before.timescale
                 local elapsed = math.floor((GetGameTimer() - t0) / 1000 * scale)
                 local rd, rh, rm, rs = TimeToDHMS((before.time + elapsed) % WEEK_SECONDS)
-                WeatherSync.setTime(rd, rh, rm, rs, 0, before.timeFrozen)
+                LumanWeather.setTime(rd, rh, rm, rs, 0, before.timeFrozen)
             end
 
             -- S8: timescale set/restore
-            if WeatherSync.getState().timeFrozen then
+            if LumanWeather.getState().timeFrozen then
                 skip("S8 timescale", "time is frozen")
             else
-                local orig = WeatherSync.getState().timescale
+                local orig = LumanWeather.getState().timescale
 
-                WeatherSync.setTimescale(120.0)
-                local t1 = WeatherSync.getTimeSeconds()
+                LumanWeather.setTimescale(120.0)
+                local t1 = LumanWeather.getTimeSeconds()
 
                 Wait(2000)
 
-                local state = WeatherSync.getState()
+                local state = LumanWeather.getState()
                 local advance = (state.time - t1) % WEEK_SECONDS
 
                 report("S8 timescale", state.timescale == 120.0 and math.abs(advance - 240) <= 130,
                     string.format("advance %ds over 2s (expected ~240s)", advance))
 
-                WeatherSync.setTimescale(orig)
+                LumanWeather.setTimescale(orig)
             end
 
             -- S9: weather set/restore (freeze/snow flags restored exactly)
             do
-                local before = WeatherSync.getState()
+                local before = LumanWeather.getState()
                 local testWeather = before.weather ~= "rain" and "rain" or "clouds"
 
-                WeatherSync.setWeather(testWeather, 0.1, before.weatherFrozen, before.permanentSnow)
-                report("S9 weather set", WeatherSync.getWeather() == testWeather,
-                    string.format("%s -> %s", before.weather, tostring(WeatherSync.getWeather())))
-                WeatherSync.setWeather(before.weather, 2.0, before.weatherFrozen, before.permanentSnow)
+                LumanWeather.setWeather(testWeather, 0.1, before.weatherFrozen, before.permanentSnow)
+                report("S9 weather set", LumanWeather.getWeather() == testWeather,
+                    string.format("%s -> %s", before.weather, tostring(LumanWeather.getWeather())))
+                LumanWeather.setWeather(before.weather, 2.0, before.weatherFrozen, before.permanentSnow)
             end
 
             -- S10: wind set/restore
             do
-                local before = WeatherSync.getState()
+                local before = LumanWeather.getState()
 
-                WeatherSync.setWind(123.0, 4.5, before.windFrozen)
-                local state = WeatherSync.getState()
+                LumanWeather.setWind(123.0, 4.5, before.windFrozen)
+                local state = LumanWeather.getState()
 
                 report("S10 wind set", state.windDirection == 123.0 and state.windSpeed == 4.5,
                     string.format("direction %.1f°, speed %.1f", state.windDirection, state.windSpeed))
 
-                WeatherSync.setWind(before.windDirection, before.windSpeed, before.windFrozen)
+                LumanWeather.setWind(before.windDirection, before.windSpeed, before.windFrozen)
             end
         end
 
@@ -235,7 +235,7 @@ end
 
 RegisterCommand("weathertest", function(source, args, raw)
     if source and source > 0 then
-        WeatherSync.printMessage(source, {color = {255, 255, 128}, args = {"weathertest", "Use /weathertest in game, or run this command from the server console"}})
+        LumanWeather.printMessage(source, {color = {255, 255, 128}, args = {"weathertest", "Use /weathertest in game, or run this command from the server console"}})
         return
     end
 
@@ -249,7 +249,7 @@ RegisterCommand("weathertest", function(source, args, raw)
 
         pendingClientTests[target] = os.time()
         log("info", string.format("weathertest: running client suite on player %d (%s)...", target, GetPlayerName(target)))
-        TriggerClientEvent("weathersync:runClientTests", target, args[3] == "full")
+        TriggerClientEvent("luman-weather:runClientTests", target, args[3] == "full")
         return
     end
 

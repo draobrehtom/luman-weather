@@ -1,5 +1,5 @@
 -- ============================================================================
--- WeatherSync - client test suite
+-- Luman Weather - client test suite
 --
 -- Only active when Config.enableTests = true.
 --   /weathertest       - read-only tests
@@ -42,7 +42,7 @@ local function runTestSuite(full, echoToServer)
         print(string.format("[weathertest] %s: %s", label, text))
 
         if echoToServer then
-            TriggerServerEvent("weathersync:clientTestResult", string.format("%s: %s", label, text))
+            TriggerServerEvent("luman-weather:clientTestResult", string.format("%s: %s", label, text))
         end
     end
 
@@ -106,7 +106,7 @@ local function runTestSuite(full, echoToServer)
         local ok, detail = true, nil
 
         for _, c in ipairs(cases) do
-            local got = WeatherSync.translateWeatherForRegion(c[1], c[2], c[3], 0.0)
+            local got = LumanWeather.translateWeatherForRegion(c[1], c[2], c[3], 0.0)
             if got ~= c[4] then
                 ok, detail = false, string.format("%s in %s -> %s, expected %s", c[1], c[5], got, c[4])
                 break
@@ -117,33 +117,33 @@ local function runTestSuite(full, echoToServer)
     end
 
     -- T4: initialization completed and server state received
-    local state = WeatherSync.getState()
+    local state = LumanWeather.getState()
     report("T4 init", state.initialized and state.baseNetworkTime > 0 and state.serverWeather ~= nil,
         string.format("initialized=%s, timeSynced=%s, weather=%s",
             tostring(state.initialized), tostring(state.baseNetworkTime > 0), tostring(state.serverWeather)))
 
     -- T5: client state vs authoritative server state
-    local server = WeatherSync.fetchServerState()
+    local server = LumanWeather.fetchServerState()
 
     if not server then
         report("T5 server sync", false, "no response from server within 3s")
     else
-        state = WeatherSync.getState()
+        state = LumanWeather.getState()
 
         local scale = server.timescale == 0 and 1 or server.timescale
         local tolerance = scale * 2 + 5
 
-        local timeDiff = WrapDiff(WeatherSync.computeLocalTime(), server.time, WEEK_SECONDS)
+        local timeDiff = WrapDiff(LumanWeather.computeLocalTime(), server.time, WEEK_SECONDS)
         report("T5a time sync", timeDiff <= tolerance, string.format("diff %ds (tolerance %ds)", timeDiff, tolerance))
 
-        local clockDiff = WrapDiff(gameClockTime(), WeatherSync.computeLocalTime() % DAY_SECONDS, DAY_SECONDS)
+        local clockDiff = WrapDiff(gameClockTime(), LumanWeather.computeLocalTime() % DAY_SECONDS, DAY_SECONDS)
         report("T5b game clock", clockDiff <= tolerance, string.format("diff %ds", clockDiff))
 
         report("T5c weather received", state.serverWeather == server.weather,
             string.format("server %s, client %s", server.weather, tostring(state.serverWeather)))
 
         local x, y, z = table.unpack(GetEntityCoords(PlayerPedId()))
-        local expected = WeatherSync.translateWeatherForRegion(server.weather, x, y, z)
+        local expected = LumanWeather.translateWeatherForRegion(server.weather, x, y, z)
         report("T5d weather applied", state.weather == expected,
             string.format("expected %s, applied %s", expected, tostring(state.weather)))
 
@@ -159,19 +159,19 @@ local function runTestSuite(full, echoToServer)
     end
 
     -- T6: clock advances at the expected rate
-    state = WeatherSync.getState()
+    state = LumanWeather.getState()
 
     if state.timeFrozen then
         skip("T6 clock advance", "time is frozen")
     else
         local scale = state.timescale == 0 and 1 or state.timescale
-        local t1 = WeatherSync.computeLocalTime()
+        local t1 = LumanWeather.computeLocalTime()
         local c1 = gameClockTime()
 
         say({255, 255, 255}, "T6", "measuring clock advance over 4s...")
         Wait(4000)
 
-        local computedAdvance = (WeatherSync.computeLocalTime() - t1) % WEEK_SECONDS
+        local computedAdvance = (LumanWeather.computeLocalTime() - t1) % WEEK_SECONDS
         local clockAdvance = (gameClockTime() - c1) % DAY_SECONDS
         local expected = 4 * scale
         local tol = 2 * scale + 3
@@ -184,7 +184,7 @@ local function runTestSuite(full, echoToServer)
 
     -- T7: no sync traffic while idle
     do
-        local stats = WeatherSync.getDebugStats()
+        local stats = LumanWeather.getDebugStats()
         local w1, t1 = stats.weatherSyncCount, stats.timeSyncCount
 
         say({255, 255, 255}, "T7", "monitoring network traffic for 5s...")
@@ -202,39 +202,39 @@ local function runTestSuite(full, echoToServer)
     if not full then
         say({255, 255, 255}, "weathertest", "read-only tests done; run '/weathertest full' to also test set/restore of time, weather, timescale and wind (requires admin permissions)")
     else
-        local st = WeatherSync.fetchServerState()
+        local st = LumanWeather.fetchServerState()
 
         if not st then
             skip("T8-T11", "no response from server")
         else
             -- T8: weather set/restore
-            local origSnow = WeatherSync.getState().serverPermanentSnow
+            local origSnow = LumanWeather.getState().serverPermanentSnow
             local testWeather = st.weather ~= "rain" and "rain" or "clouds"
 
-            TriggerServerEvent("weathersync:setWeather", testWeather, 0.1, false, false)
-            local canMutate = pollUntil(3000, function() return WeatherSync.getState().serverWeather == testWeather end)
+            TriggerServerEvent("luman-weather:setWeather", testWeather, 0.1, false, false)
+            local canMutate = pollUntil(3000, function() return LumanWeather.getState().serverWeather == testWeather end)
 
             if not canMutate then
                 skip("T8-T11", "no weather event within 3s — missing admin permissions (command.weather etc.)?")
             else
                 local x, y, z = table.unpack(GetEntityCoords(PlayerPedId()))
-                local applied = WeatherSync.getState().weather
-                report("T8 weather set", applied == WeatherSync.translateWeatherForRegion(testWeather, x, y, z),
+                local applied = LumanWeather.getState().weather
+                report("T8 weather set", applied == LumanWeather.translateWeatherForRegion(testWeather, x, y, z),
                     string.format("set %s, applied %s", testWeather, tostring(applied)))
 
-                TriggerServerEvent("weathersync:setWeather", st.weather, 2.0, false, origSnow)
-                pollUntil(3000, function() return WeatherSync.getState().serverWeather == st.weather end)
+                TriggerServerEvent("luman-weather:setWeather", st.weather, 2.0, false, origSnow)
+                pollUntil(3000, function() return LumanWeather.getState().serverWeather == st.weather end)
 
                 -- T9: time set/restore
-                local before = WeatherSync.fetchServerState()
+                local before = LumanWeather.fetchServerState()
 
                 if before then
                     local target = DHMSToTime(2, 3, 45, 0)
                     local startTimer = GetGameTimer()
                     local scale = before.timescale == 0 and 1 or before.timescale
 
-                    TriggerServerEvent("weathersync:setTime", 2, 3, 45, 0, 0, false)
-                    local okSet = pollUntil(3000, function() return WrapDiff(WeatherSync.getState().baseGameTime, target, WEEK_SECONDS) <= 5 end)
+                    TriggerServerEvent("luman-weather:setTime", 2, 3, 45, 0, 0, false)
+                    local okSet = pollUntil(3000, function() return WrapDiff(LumanWeather.getState().baseGameTime, target, WEEK_SECONDS) <= 5 end)
 
                     local clockOk = false
                     if okSet then
@@ -249,30 +249,30 @@ local function runTestSuite(full, echoToServer)
                     -- Restore original time, compensating for real time spent testing
                     local elapsed = math.floor((GetGameTimer() - startTimer) / 1000 * scale)
                     local rd, rh, rm, rs = TimeToDHMS((before.time + elapsed) % WEEK_SECONDS)
-                    TriggerServerEvent("weathersync:setTime", rd, rh, rm, rs, 0, before.frozen)
+                    TriggerServerEvent("luman-weather:setTime", rd, rh, rm, rs, 0, before.frozen)
                     Wait(500)
                 else
                     skip("T9 time set", "no server response")
                 end
 
                 -- T10: timescale set/restore, checks speed and absence of time jumps
-                local st10 = WeatherSync.fetchServerState()
+                local st10 = LumanWeather.fetchServerState()
 
                 if st10 then
                     local oldScale = st10.timescale == 0 and 1 or st10.timescale
-                    local t0 = WeatherSync.computeLocalTime()
+                    local t0 = LumanWeather.computeLocalTime()
 
-                    TriggerServerEvent("weathersync:setTimescale", 120.0)
-                    local okScale = pollUntil(3000, function() return WeatherSync.getState().timescale == 120.0 end)
+                    TriggerServerEvent("luman-weather:setTimescale", 120.0)
+                    local okScale = pollUntil(3000, function() return LumanWeather.getState().timescale == 120.0 end)
 
                     if okScale then
-                        local t1 = WeatherSync.computeLocalTime()
+                        local t1 = LumanWeather.computeLocalTime()
                         local jump = WrapDiff(t1, t0, WEEK_SECONDS)
                         local noJump = jump <= oldScale * 4 + 10
 
                         Wait(3000)
 
-                        local advance = (WeatherSync.computeLocalTime() - t1) % WEEK_SECONDS
+                        local advance = (LumanWeather.computeLocalTime() - t1) % WEEK_SECONDS
                         local speedOk = math.abs(advance - 360) <= 60
 
                         report("T10 timescale", noJump and speedOk,
@@ -281,26 +281,26 @@ local function runTestSuite(full, echoToServer)
                         report("T10 timescale", false, "changeTimescale event not received")
                     end
 
-                    TriggerServerEvent("weathersync:setTimescale", st10.timescale)
+                    TriggerServerEvent("luman-weather:setTimescale", st10.timescale)
                     Wait(500)
                 else
                     skip("T10 timescale", "no server response")
                 end
 
                 -- T11: wind set/restore
-                local st11 = WeatherSync.fetchServerState()
+                local st11 = LumanWeather.fetchServerState()
 
                 if st11 then
-                    TriggerServerEvent("weathersync:setWind", 123.0, 4.5, false)
+                    TriggerServerEvent("luman-weather:setWind", 123.0, 4.5, false)
                     local okWind = pollUntil(3000, function()
-                        local s = WeatherSync.getState()
+                        local s = LumanWeather.getState()
                         return s.serverWindDirection == 123.0 and s.serverWindSpeed == 4.5
                     end)
 
                     report("T11 wind", okWind, okWind and "changeWind received and applied" or "changeWind event not received")
 
-                    TriggerServerEvent("weathersync:setWind", st11.windDirection, st11.windSpeed, false)
-                    pollUntil(2000, function() return WeatherSync.getState().serverWindDirection == st11.windDirection end)
+                    TriggerServerEvent("luman-weather:setWind", st11.windDirection, st11.windSpeed, false)
+                    pollUntil(2000, function() return LumanWeather.getState().serverWindDirection == st11.windDirection end)
                 else
                     skip("T11 wind", "no server response")
                 end
@@ -320,7 +320,7 @@ local function startTestSuite(full, echoToServer)
         return
     end
 
-    if not WeatherSync.getState().syncEnabled then
+    if not LumanWeather.getState().syncEnabled then
         TriggerEvent("chat:addMessage", {color = {255, 80, 80}, args = {"weathertest", "sync is disabled — enable it first with /weathersync"}})
         return
     end
@@ -335,7 +335,7 @@ local function startTestSuite(full, echoToServer)
             print("[weathertest] error: " .. tostring(err))
 
             if echoToServer then
-                TriggerServerEvent("weathersync:clientTestResult", "error: " .. tostring(err))
+                TriggerServerEvent("luman-weather:clientTestResult", "error: " .. tostring(err))
             end
         end
 
@@ -347,12 +347,12 @@ RegisterCommand("weathertest", function(source, args, raw)
     startTestSuite(args[1] == "full", false)
 end, false)
 
-RegisterNetEvent("weathersync:runClientTests")
-AddEventHandler("weathersync:runClientTests", function(full)
+RegisterNetEvent("luman-weather:runClientTests")
+AddEventHandler("luman-weather:runClientTests", function(full)
     startTestSuite(full, true)
 end)
 
-AddEventHandler("weathersync:clientReady", function()
+AddEventHandler("luman-weather:clientReady", function()
     TriggerEvent("chat:addSuggestion", "/weathertest", "Run the weather sync test suite", {
         {name = "full", help = "add 'full' to also test set/restore of time/weather/wind (admin only)"}
     })

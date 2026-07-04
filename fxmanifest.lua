@@ -2,9 +2,9 @@ fx_version "cerulean"
 game "rdr3"
 rdr3_warning "I acknowledge that this is a prerelease build of RedM, and I am aware my resources *will* become incompatible once RedM ships."
 
-name "weathersync"
-author "kibukj"
-description "Optimized time and weather synchronization for RedM"
+name "luman-weather"
+author "Luman"
+description "Luman Weather - optimized time and weather synchronization for RedM"
 version "2.0.0"
 
 ui_page "ui/index.html"

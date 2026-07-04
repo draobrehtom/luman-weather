@@ -1,16 +1,16 @@
 -- ============================================================================
--- WeatherSync - client core
+-- Luman Weather - client core
 --
 -- Keeps the local clock, applies server weather/wind and translates them for
 -- the player's region and altitude. The clock advances entirely locally from
 -- the shared network clock - the server only sends events when something
 -- changes (weather change, admin command, this player joining).
 --
--- The WeatherSync table exposes state and helpers to the other client files
+-- The LumanWeather table exposes state and helpers to the other client files
 -- (interface.lua, commands.lua, tests.lua).
 -- ============================================================================
 
-WeatherSync = {}
+LumanWeather = {}
 
 local MEAN_SEA_LEVEL = 40.0
 
@@ -61,13 +61,13 @@ local debugStats = {
 
 local function debugLog(message)
     if debugMode then
-        print(string.format("^3[WeatherSync Debug]^7 %s", message))
+        print(string.format("^3[Luman Weather Debug]^7 %s", message))
     end
 end
 
-WeatherSync.debugLog = debugLog
+LumanWeather.debugLog = debugLog
 
-function WeatherSync.toggleDebug()
+function LumanWeather.toggleDebug()
     debugMode = not debugMode
     return debugMode
 end
@@ -90,8 +90,8 @@ local function setTimeNative(hour, minute, second, transitionTime)
     Citizen.InvokeNative(0x669E223E64B1903C, hour, minute, second, transitionTime, true) -- _NETWORK_CLOCK_TIME_OVERRIDE
 end
 
-WeatherSync.setWeatherNative = setWeatherNative
-WeatherSync.setSnowCoverage = setSnowCoverage
+LumanWeather.setWeatherNative = setWeatherNative
+LumanWeather.setSnowCoverage = setSnowCoverage
 
 -- ============================================================================
 -- REGIONS
@@ -175,10 +175,10 @@ local function isSnowyWeather(weather)
         or weather == "whiteout" or weather == "snowlight"
 end
 
-WeatherSync.translateWeatherForRegion = translateWeatherForRegion
-WeatherSync.getRegionName = getRegionName
-WeatherSync.isSnowyWeather = isSnowyWeather
-WeatherSync.MEAN_SEA_LEVEL = MEAN_SEA_LEVEL
+LumanWeather.translateWeatherForRegion = translateWeatherForRegion
+LumanWeather.getRegionName = getRegionName
+LumanWeather.isSnowyWeather = isSnowyWeather
+LumanWeather.MEAN_SEA_LEVEL = MEAN_SEA_LEVEL
 
 -- Wind shifts direction and gains speed with altitude
 local function translateWindForAltitude(direction, speed)
@@ -269,7 +269,7 @@ local function computeLocalTime()
     return baseGameTime
 end
 
-WeatherSync.computeLocalTime = computeLocalTime
+LumanWeather.computeLocalTime = computeLocalTime
 
 -- ============================================================================
 -- SYNC TOGGLING & LOCAL OVERRIDES
@@ -283,13 +283,13 @@ local function toggleSync()
     if syncEnabled then
         -- Re-request the full state from the server: local overrides may have
         -- desynced us, and no periodic sync exists to catch us up
-        TriggerServerEvent("weathersync:init")
+        TriggerServerEvent("luman-weather:init")
     end
 
     if Config.Notify then
         TriggerEvent("chat:addMessage", {
             color = {255, 255, 128},
-            args = {"Weather Sync", syncEnabled and "on" or "off"}
+            args = {"Luman Weather", syncEnabled and "on" or "off"}
         })
     end
 end
@@ -328,10 +328,10 @@ local function setMyTime(h, m, s, t)
     setTimeNative(h, m, s, t)
 end
 
-WeatherSync.toggleSync = toggleSync
-WeatherSync.setSyncEnabled = setSyncEnabled
-WeatherSync.setMyWeather = setMyWeather
-WeatherSync.setMyTime = setMyTime
+LumanWeather.toggleSync = toggleSync
+LumanWeather.setSyncEnabled = setSyncEnabled
+LumanWeather.setMyWeather = setMyWeather
+LumanWeather.setMyTime = setMyTime
 
 exports("toggleSync", toggleSync)
 exports("setSyncEnabled", setSyncEnabled)
@@ -346,7 +346,7 @@ end)
 -- STATE ACCESS (for interface.lua, commands.lua, tests.lua)
 -- ============================================================================
 
-function WeatherSync.getState()
+function LumanWeather.getState()
     return {
         syncEnabled = syncEnabled,
         initialized = initialized,
@@ -364,13 +364,13 @@ function WeatherSync.getState()
     }
 end
 
-function WeatherSync.getDebugStats()
+function LumanWeather.getDebugStats()
     return debugStats
 end
 
 -- Request the authoritative server state and await the answer.
 -- Returns nil if the server does not answer within the timeout.
-function WeatherSync.fetchServerState(timeout)
+function LumanWeather.fetchServerState(timeout)
     local p = promise.new()
     local done = false
 
@@ -381,7 +381,7 @@ function WeatherSync.fetchServerState(timeout)
         end
     end
 
-    TriggerServerEvent("weathersync:requestSyncCheck")
+    TriggerServerEvent("luman-weather:requestSyncCheck")
 
     SetTimeout(timeout or 3000, function()
         if not done then
@@ -398,18 +398,18 @@ end
 -- NETWORK EVENTS
 -- ============================================================================
 
-RegisterNetEvent("weathersync:changeWeather")
-RegisterNetEvent("weathersync:changeTime")
-RegisterNetEvent("weathersync:changeTimescale")
-RegisterNetEvent("weathersync:changeWind")
-RegisterNetEvent("weathersync:syncBaseTime")
-RegisterNetEvent("weathersync:syncCheckResult")
-RegisterNetEvent("weathersync:toggleSync")
-RegisterNetEvent("weathersync:setSyncEnabled")
-RegisterNetEvent("weathersync:setMyTime")
-RegisterNetEvent("weathersync:setMyWeather")
+RegisterNetEvent("luman-weather:changeWeather")
+RegisterNetEvent("luman-weather:changeTime")
+RegisterNetEvent("luman-weather:changeTimescale")
+RegisterNetEvent("luman-weather:changeWind")
+RegisterNetEvent("luman-weather:syncBaseTime")
+RegisterNetEvent("luman-weather:syncCheckResult")
+RegisterNetEvent("luman-weather:toggleSync")
+RegisterNetEvent("luman-weather:setSyncEnabled")
+RegisterNetEvent("luman-weather:setMyTime")
+RegisterNetEvent("luman-weather:setMyWeather")
 
-AddEventHandler("weathersync:changeWeather", function(weather, transitionTime, permanentSnow)
+AddEventHandler("luman-weather:changeWeather", function(weather, transitionTime, permanentSnow)
     if not syncEnabled then
         return
     end
@@ -424,7 +424,7 @@ AddEventHandler("weathersync:changeWeather", function(weather, transitionTime, p
     applyServerWeather(transitionTime)
 end)
 
-AddEventHandler("weathersync:changeTime", function(day, hour, minute, second, transitionTime, freezeTime)
+AddEventHandler("luman-weather:changeTime", function(day, hour, minute, second, transitionTime, freezeTime)
     if not syncEnabled then
         return
     end
@@ -442,7 +442,7 @@ AddEventHandler("weathersync:changeTime", function(day, hour, minute, second, tr
     setTimeNative(hour, minute, second, transitionTime)
 end)
 
-AddEventHandler("weathersync:syncBaseTime", function(gameTime, timescale, frozen)
+AddEventHandler("luman-weather:syncBaseTime", function(gameTime, timescale, frozen)
     if not syncEnabled then
         return
     end
@@ -457,7 +457,7 @@ AddEventHandler("weathersync:syncBaseTime", function(gameTime, timescale, frozen
     setTimeNative(hour, minute, second, 0)
 end)
 
-AddEventHandler("weathersync:changeTimescale", function(scale)
+AddEventHandler("luman-weather:changeTimescale", function(scale)
     if not syncEnabled then
         return
     end
@@ -474,7 +474,7 @@ AddEventHandler("weathersync:changeTimescale", function(scale)
     currentTimescale = scale
 end)
 
-AddEventHandler("weathersync:changeWind", function(direction, speed)
+AddEventHandler("luman-weather:changeWind", function(direction, speed)
     debugStats.windSyncCount = debugStats.windSyncCount + 1
     debugStats.lastWindSync = GetGameTimer()
     debugLog(string.format("Wind change: %.1f°, speed: %.1f", direction, speed))
@@ -485,7 +485,7 @@ AddEventHandler("weathersync:changeWind", function(direction, speed)
     applyServerWind()
 end)
 
-AddEventHandler("weathersync:syncCheckResult", function(svTime, svWeather, svWindDirection, svWindSpeed, svTimescale, svFrozen)
+AddEventHandler("luman-weather:syncCheckResult", function(svTime, svWeather, svWindDirection, svWindSpeed, svTimescale, svFrozen)
     if pendingSyncCheck then
         local deliver = pendingSyncCheck
         pendingSyncCheck = nil
@@ -500,10 +500,10 @@ AddEventHandler("weathersync:syncCheckResult", function(svTime, svWeather, svWin
     end
 end)
 
-AddEventHandler("weathersync:toggleSync", toggleSync)
-AddEventHandler("weathersync:setSyncEnabled", setSyncEnabled)
-AddEventHandler("weathersync:setMyWeather", setMyWeather)
-AddEventHandler("weathersync:setMyTime", setMyTime)
+AddEventHandler("luman-weather:toggleSync", toggleSync)
+AddEventHandler("luman-weather:setSyncEnabled", setSyncEnabled)
+AddEventHandler("luman-weather:setMyWeather", setMyWeather)
+AddEventHandler("luman-weather:setMyTime", setMyTime)
 
 -- ============================================================================
 -- INITIALIZATION & LOCAL LOOPS
@@ -517,7 +517,7 @@ local function init()
 
     SetNuiFocus(false, false)
 
-    TriggerServerEvent("weathersync:init")
+    TriggerServerEvent("luman-weather:init")
 
     -- Local clock: advances game time from the shared network clock without
     -- any server communication
@@ -550,7 +550,7 @@ local function init()
     end)
 
     -- Lets commands.lua and tests.lua register their chat suggestions
-    TriggerEvent("weathersync:clientReady")
+    TriggerEvent("luman-weather:clientReady")
 end
 
 -- Framework-independent: initialize as soon as the network session is up

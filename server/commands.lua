@@ -1,15 +1,15 @@
 -- ============================================================================
--- WeatherSync - server commands
+-- Luman Weather - server commands
 --
 -- Admin commands are registered as restricted (ace permissions), see
 -- permissions.cfg. Player commands (/forecast, /mytime, ...) are granted to
 -- everyone there.
 -- ============================================================================
 
-local printMessage = WeatherSync.printMessage
+local printMessage = LumanWeather.printMessage
 
 RegisterCommand("weather", function(source, args, raw)
-    local weather = args[1] and args[1] or WeatherSync.getWeather()
+    local weather = args[1] and args[1] or LumanWeather.getWeather()
     local transition = tonumber(args[2]) or 10.0
     local freeze = args[3] == "1"
     local permanentSnow = args[4] == "1"
@@ -19,7 +19,7 @@ RegisterCommand("weather", function(source, args, raw)
     end
 
     if TableContains(Config.weatherTypes, weather) then
-        WeatherSync.setWeather(weather, transition + 0.0, freeze, permanentSnow)
+        LumanWeather.setWeather(weather, transition + 0.0, freeze, permanentSnow)
     else
         printMessage(source, {color = {255, 0, 0}, args = {"Error", "Unknown weather type: " .. weather}})
     end
@@ -34,9 +34,9 @@ RegisterCommand("time", function(source, args, raw)
         local t = tonumber(args[5]) or 0
         local f = args[6] == "1"
 
-        WeatherSync.setTime(d, h, m, s, t, f)
+        LumanWeather.setTime(d, h, m, s, t, f)
     else
-        printMessage(source, {color = {255, 255, 128}, args = {"Time", FormatTime(WeatherSync.getTimeSeconds())}})
+        printMessage(source, {color = {255, 255, 128}, args = {"Time", FormatTime(LumanWeather.getTimeSeconds())}})
     end
 end, true)
 
@@ -44,9 +44,9 @@ RegisterCommand("timescale", function(source, args, raw)
     local scale = tonumber(args[1])
 
     if scale then
-        WeatherSync.setTimescale(scale + 0.0)
+        LumanWeather.setTimescale(scale + 0.0)
     else
-        printMessage(source, {color = {255, 255, 128}, args = {"Timescale", WeatherSync.getState().timescale}})
+        printMessage(source, {color = {255, 255, 128}, args = {"Timescale", LumanWeather.getState().timescale}})
     end
 end, true)
 
@@ -54,9 +54,9 @@ RegisterCommand("syncdelay", function(source, args, raw)
     local delay = tonumber(args[1])
 
     if delay and delay >= 100 then
-        WeatherSync.setSyncDelay(delay)
+        LumanWeather.setSyncDelay(delay)
     else
-        printMessage(source, {color = {255, 255, 128}, args = {"Sync delay", string.format("%dms", WeatherSync.getState().syncDelay)}})
+        printMessage(source, {color = {255, 255, 128}, args = {"Sync delay", string.format("%dms", LumanWeather.getState().syncDelay)}})
     end
 end, true)
 
@@ -66,15 +66,15 @@ RegisterCommand("wind", function(source, args, raw)
         local speed = (tonumber(args[2]) or 0.0) + 0.0
         local frozen = args[3] == "1"
 
-        WeatherSync.setWind(direction, speed, frozen)
+        LumanWeather.setWind(direction, speed, frozen)
     end
 end, true)
 
 RegisterCommand("forecast", function(source, args, raw)
     if source and source > 0 then
-        TriggerClientEvent("weathersync:toggleForecast", source)
+        TriggerClientEvent("luman-weather:toggleForecast", source)
     else
-        local forecast = WeatherSync.getForecast()
+        local forecast = LumanWeather.getForecast()
 
         printMessage(source, {args = {"WEATHER FORECAST"}})
         printMessage(source, {args = {"================"}})
@@ -88,14 +88,14 @@ end, true)
 
 RegisterCommand("weatherui", function(source, args, raw)
     if source and source > 0 then
-        local state = WeatherSync.getState()
-        TriggerClientEvent("weathersync:openAdminUi", source, state.weather, state.time, state.timescale, state.windDirection, state.windSpeed, state.syncDelay)
+        local state = LumanWeather.getState()
+        TriggerClientEvent("luman-weather:openAdminUi", source, state.weather, state.time, state.timescale, state.windDirection, state.windSpeed, state.syncDelay)
     end
 end, true)
 
 RegisterCommand("weathersync", function(source, args, raw)
     if source and source > 0 then
-        TriggerClientEvent("weathersync:toggleSync", source)
+        TriggerClientEvent("luman-weather:toggleSync", source)
     end
 end, true)
 
@@ -106,31 +106,31 @@ RegisterCommand("mytime", function(source, args, raw)
         local s = tonumber(args[3]) or 0
         local t = tonumber(args[4]) or 0
 
-        TriggerClientEvent("weathersync:setMyTime", source, h, m, s, t)
+        TriggerClientEvent("luman-weather:setMyTime", source, h, m, s, t)
     end
 end, true)
 
 RegisterCommand("myweather", function(source, args, raw)
     if source and source > 0 then
-        local weather = args[1] and args[1] or WeatherSync.getWeather()
+        local weather = args[1] and args[1] or LumanWeather.getWeather()
         local transition = tonumber(args[2]) or 5.0
         local permanentSnow = args[3] == "1"
 
-        TriggerClientEvent("weathersync:setMyWeather", source, weather, transition, permanentSnow)
+        TriggerClientEvent("luman-weather:setMyWeather", source, weather, transition, permanentSnow)
     end
 end, true)
 
 RegisterCommand("weatherdebug_sv", function(source, args, raw)
-    local enabled = WeatherSync.toggleDebug()
+    local enabled = LumanWeather.toggleDebug()
     local message = string.format("Server weather debug: %s", enabled and "enabled" or "disabled")
 
-    WeatherSync.log(enabled and "success" or "default", message)
-    printMessage(source, {color = {255, 255, 128}, args = {"WeatherSync", message}})
+    LumanWeather.log(enabled and "success" or "default", message)
+    printMessage(source, {color = {255, 255, 128}, args = {"Luman Weather", message}})
 end, true)
 
 RegisterCommand("weatherstats", function(source, args, raw)
-    local state = WeatherSync.getState()
-    local stats = WeatherSync.getStats()
+    local state = LumanWeather.getState()
+    local stats = LumanWeather.getStats()
 
     printMessage(source, {color = {100, 200, 255}, args = {"=== Server Weather Stats ==="}})
     printMessage(source, {color = {255, 255, 255}, args = {"Current Weather", state.weather}})

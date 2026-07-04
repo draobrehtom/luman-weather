@@ -1,9 +1,9 @@
-# WeatherSync
+# Luman Weather
 
 **Time and weather synchronization for RedM. Optimized, framework independent.**
 
 Every player sees the same time and the same weather. Unlike most weather
-scripts, WeatherSync doesn't spam the network every few seconds — the server
+scripts, Luman Weather doesn't spam the network every few seconds — the server
 sends a message only when something actually changes, and each client runs
 its own clock in perfect sync. When nothing happens, nothing is sent.
 
@@ -24,8 +24,8 @@ its own clock in perfect sync. When nothing happens, nothing is sent.
 
 ```cfg
 # server.cfg
-exec @weathersync/permissions.cfg
-ensure weathersync
+exec @luman-weather/permissions.cfg
+ensure luman-weather
 ```
 
 Done. By default the in-game clock mirrors the real server clock and the

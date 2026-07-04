@@ -51,7 +51,7 @@ player's actual region with `/weatherstatus` (Region row). If it says
 
 ### Does `Config.syncDelay` affect network usage?
 
-No. It's an internal server tick. WeatherSync only sends network messages
+No. It's an internal server tick. Luman Weather only sends network messages
 when the weather actually changes (about once per in-game hour) and when a
 player joins. You can verify with `/weatherstatus` — the "Sync Events
 Received" counters stay flat while nothing changes.

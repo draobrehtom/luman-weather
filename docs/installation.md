@@ -2,17 +2,17 @@
 
 ## Install
 
-1. Copy the `weathersync` folder into your resources directory:
+1. Copy the `luman-weather` folder into your resources directory:
 
    ```
-   resources/[local]/weathersync
+   resources/[local]/luman-weather
    ```
 
 2. Add to `server.cfg`:
 
    ```cfg
-   exec @weathersync/permissions.cfg
-   ensure weathersync
+   exec @luman-weather/permissions.cfg
+   ensure luman-weather
    ```
 
 3. Restart the server.
@@ -20,7 +20,7 @@
 The server console should show:
 
 ```
-[success] WeatherSync initialized successfully
+[success] Luman Weather initialized successfully
 ```
 
 In game, run `/synccheck` — every line should say `OK`.

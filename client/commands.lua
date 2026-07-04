@@ -1,5 +1,5 @@
 -- ============================================================================
--- WeatherSync - client commands
+-- Luman Weather - client commands
 --
 -- Diagnostics and local-only commands. Everything here is read-only or
 -- affects only this client; server state is changed via server commands.
@@ -17,7 +17,7 @@ end
 
 RegisterCommand("synccheck", function(source, args, raw)
     CreateThread(function()
-        local state = WeatherSync.getState()
+        local state = LumanWeather.getState()
 
         chatMessage({100, 200, 255}, "=== Sync Check ===")
 
@@ -31,7 +31,7 @@ RegisterCommand("synccheck", function(source, args, raw)
             chatMessage({255, 80, 80}, "WARNING", "init() ran but no syncBaseTime received from the server yet")
         end
 
-        local server = WeatherSync.fetchServerState(3000)
+        local server = LumanWeather.fetchServerState(3000)
 
         if not server then
             chatMessage({255, 80, 80}, "FAIL", "no response from the server within 3s")
@@ -50,7 +50,7 @@ RegisterCommand("synccheck", function(source, args, raw)
         local tolerance = scale * 2 + 5
 
         -- 1. Locally computed game time vs authoritative server time
-        local localTime = WeatherSync.computeLocalTime()
+        local localTime = LumanWeather.computeLocalTime()
         local diff = WrapDiff(localTime, server.time, WEEK_SECONDS)
 
         report("TIME", diff <= tolerance,
@@ -69,7 +69,7 @@ RegisterCommand("synccheck", function(source, args, raw)
 
         -- 4. Weather actually applied vs what should be applied in this region
         local x, y, z = table.unpack(GetEntityCoords(PlayerPedId()))
-        local expectedWeather = WeatherSync.translateWeatherForRegion(server.weather, x, y, z)
+        local expectedWeather = LumanWeather.translateWeatherForRegion(server.weather, x, y, z)
 
         report("WEATHER APPLIED", state.weather == expectedWeather,
             string.format("expected %s, applied %s (region monitor updates every 5s)", expectedWeather, tostring(state.weather)))
@@ -92,7 +92,7 @@ end, false)
 -- ============================================================================
 
 RegisterCommand("weatherstatus", function(source, args, raw)
-    local state = WeatherSync.getState()
+    local state = LumanWeather.getState()
 
     local ped = PlayerPedId()
     local pos = GetEntityCoords(ped)
@@ -108,18 +108,18 @@ RegisterCommand("weatherstatus", function(source, args, raw)
     chatMessage({100, 200, 255}, "=== Weather Sync Status ===")
     chatMessage({255, 255, 255}, "Sync Enabled", tostring(state.syncEnabled))
     chatMessage({255, 255, 255}, "Weather", state.weather or "unknown")
-    chatMessage({255, 255, 255}, "Time", FormatTime(WeatherSync.computeLocalTime()))
+    chatMessage({255, 255, 255}, "Time", FormatTime(LumanWeather.computeLocalTime()))
     chatMessage({255, 255, 255}, "Timescale", string.format("%.2f", state.timescale))
     chatMessage({255, 255, 255}, "Time Frozen", tostring(state.timeFrozen))
     chatMessage({255, 255, 255}, "Temperature", string.format("%d °%s", temp, tempUnit))
     chatMessage({255, 255, 255}, "Wind", string.format("%d %s %s", windSpeed, windUnit, GetCardinalDirection(state.windDirection)))
-    chatMessage({255, 255, 255}, "Altitude (Sea)", string.format("%dm", math.floor(pos.z - WeatherSync.MEAN_SEA_LEVEL)))
+    chatMessage({255, 255, 255}, "Altitude (Sea)", string.format("%dm", math.floor(pos.z - LumanWeather.MEAN_SEA_LEVEL)))
     chatMessage({255, 255, 255}, "Altitude (Ground)", string.format("%dm", math.floor(GetEntityHeightAboveGround(ped))))
     chatMessage({255, 255, 255}, "Snow on Ground", tostring(state.snowOnGround))
-    chatMessage({255, 255, 255}, "Region", WeatherSync.getRegionName(x, y, z))
+    chatMessage({255, 255, 255}, "Region", LumanWeather.getRegionName(x, y, z))
     chatMessage({255, 255, 255}, "Position", string.format("%.1f, %.1f, %.1f", x, y, z))
 
-    local stats = WeatherSync.getDebugStats()
+    local stats = LumanWeather.getDebugStats()
 
     chatMessage({100, 200, 255}, "=== Sync Events Received ===")
     chatMessage({255, 255, 255}, "Weather Syncs", tostring(stats.weatherSyncCount))
@@ -132,8 +132,8 @@ end, false)
 -- ============================================================================
 
 RegisterCommand("weatherdebug", function(source, args, raw)
-    local enabled = WeatherSync.toggleDebug()
-    chatMessage({255, 255, 128}, "WeatherSync Debug", enabled and "Enabled" or "Disabled")
+    local enabled = LumanWeather.toggleDebug()
+    chatMessage({255, 255, 128}, "Luman Weather Debug", enabled and "Enabled" or "Disabled")
 end, false)
 
 -- Locally preview a weather type with region translation applied
@@ -150,14 +150,14 @@ RegisterCommand("testweather", function(source, args, raw)
     end
 
     local x, y, z = table.unpack(GetEntityCoords(PlayerPedId()))
-    local translatedWeather = WeatherSync.translateWeatherForRegion(args[1], x, y, z)
+    local translatedWeather = LumanWeather.translateWeatherForRegion(args[1], x, y, z)
 
     chatMessage({100, 255, 100}, "Test Weather", string.format("Testing %s -> %s", args[1], translatedWeather))
 
-    WeatherSync.setWeatherNative(translatedWeather, 5.0)
+    LumanWeather.setWeatherNative(translatedWeather, 5.0)
 
-    if WeatherSync.isSnowyWeather(translatedWeather) then
-        WeatherSync.setSnowCoverage(3)
+    if LumanWeather.isSnowyWeather(translatedWeather) then
+        LumanWeather.setSnowCoverage(3)
     end
 end, false)
 
@@ -165,7 +165,7 @@ end, false)
 -- CHAT SUGGESTIONS
 -- ============================================================================
 
-AddEventHandler("weathersync:clientReady", function()
+AddEventHandler("luman-weather:clientReady", function()
     TriggerEvent("chat:addSuggestion", "/forecast", "Toggle display of weather forecast", {})
 
     TriggerEvent("chat:addSuggestion", "/syncdelay", "Change the server tick interval", {

@@ -1,6 +1,6 @@
 # Table of contents
 
-* [WeatherSync](README.md)
+* [Luman Weather](README.md)
 * [Installation & permissions](installation.md)
 * [Configuration](configuration.md)
 * [Commands](commands.md)

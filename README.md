@@ -1,4 +1,4 @@
-# WeatherSync
+# Luman Weather
 
 Optimized time and weather synchronization for RedM.
 
@@ -24,12 +24,12 @@ framework.
 
 ## Installation
 
-1. Copy the `weathersync` folder into your resources directory.
+1. Copy the `luman-weather` folder into your resources directory.
 2. Add to `server.cfg`:
 
    ```cfg
-   exec @weathersync/permissions.cfg
-   ensure weathersync
+   exec @luman-weather/permissions.cfg
+   ensure luman-weather
    ```
 
 3. Review [permissions.cfg](permissions.cfg) and grant the admin aces to your

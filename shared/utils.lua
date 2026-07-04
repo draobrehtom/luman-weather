@@ -1,5 +1,5 @@
 -- ============================================================================
--- WeatherSync - shared utilities
+-- Luman Weather - shared utilities
 -- Loaded on both server and client before config.lua.
 -- ============================================================================
 
