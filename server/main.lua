@@ -491,24 +491,7 @@ end
 
 LumanWeather.isAllowed = isAllowed
 
-RegisterNetEvent("luman-weather:init")
-RegisterNetEvent("luman-weather:requestUpdatedForecast")
-RegisterNetEvent("luman-weather:requestUpdatedAdminUi")
-RegisterNetEvent("luman-weather:requestSyncCheck")
-RegisterNetEvent("luman-weather:setTime")
-RegisterNetEvent("luman-weather:resetTime")
-RegisterNetEvent("luman-weather:setTimescale")
-RegisterNetEvent("luman-weather:resetTimescale")
-RegisterNetEvent("luman-weather:setWeather")
-RegisterNetEvent("luman-weather:resetWeather")
-RegisterNetEvent("luman-weather:setWeatherPattern")
-RegisterNetEvent("luman-weather:resetWeatherPattern")
-RegisterNetEvent("luman-weather:setWind")
-RegisterNetEvent("luman-weather:resetWind")
-RegisterNetEvent("luman-weather:setSyncDelay")
-RegisterNetEvent("luman-weather:resetSyncDelay")
-
-AddEventHandler("luman-weather:setWeather", function(weather, transition, freeze, permSnow)
+RegisterNetEvent("luman-weather:setWeather", function(weather, transition, freeze, permSnow)
     if not isAllowed(source, "weather") then return end
 
     if not TableContains(Config.weatherTypes, weather) then
@@ -518,32 +501,32 @@ AddEventHandler("luman-weather:setWeather", function(weather, transition, freeze
     setWeather(weather, tonumber(transition) or 10.0, freeze == true, permSnow == true)
 end)
 
-AddEventHandler("luman-weather:resetWeather", function()
+RegisterNetEvent("luman-weather:resetWeather", function()
     if not isAllowed(source, "weather") then return end
     resetWeather()
 end)
 
-AddEventHandler("luman-weather:setWeatherPattern", function(pattern)
+RegisterNetEvent("luman-weather:setWeatherPattern", function(pattern)
     if not isAllowed(source, "weather") then return end
     setWeatherPattern(pattern)
 end)
 
-AddEventHandler("luman-weather:resetWeatherPattern", function()
+RegisterNetEvent("luman-weather:resetWeatherPattern", function()
     if not isAllowed(source, "weather") then return end
     resetWeatherPattern()
 end)
 
-AddEventHandler("luman-weather:setTime", function(d, h, m, s, t, f)
+RegisterNetEvent("luman-weather:setTime", function(d, h, m, s, t, f)
     if not isAllowed(source, "time") then return end
     setTime(tonumber(d) or 0, tonumber(h) or 0, tonumber(m) or 0, tonumber(s) or 0, tonumber(t) or 0, f == true)
 end)
 
-AddEventHandler("luman-weather:resetTime", function()
+RegisterNetEvent("luman-weather:resetTime", function()
     if not isAllowed(source, "time") then return end
     resetTime()
 end)
 
-AddEventHandler("luman-weather:setTimescale", function(scale)
+RegisterNetEvent("luman-weather:setTimescale", function(scale)
     if not isAllowed(source, "timescale") then return end
 
     scale = tonumber(scale)
@@ -552,12 +535,12 @@ AddEventHandler("luman-weather:setTimescale", function(scale)
     end
 end)
 
-AddEventHandler("luman-weather:resetTimescale", function()
+RegisterNetEvent("luman-weather:resetTimescale", function()
     if not isAllowed(source, "timescale") then return end
     resetTimescale()
 end)
 
-AddEventHandler("luman-weather:setSyncDelay", function(delay)
+RegisterNetEvent("luman-weather:setSyncDelay", function(delay)
     if not isAllowed(source, "syncdelay") then return end
 
     delay = tonumber(delay)
@@ -566,26 +549,26 @@ AddEventHandler("luman-weather:setSyncDelay", function(delay)
     end
 end)
 
-AddEventHandler("luman-weather:resetSyncDelay", function()
+RegisterNetEvent("luman-weather:resetSyncDelay", function()
     if not isAllowed(source, "syncdelay") then return end
     resetSyncDelay()
 end)
 
-AddEventHandler("luman-weather:setWind", function(direction, speed, frozen)
+RegisterNetEvent("luman-weather:setWind", function(direction, speed, frozen)
     if not isAllowed(source, "wind") then return end
     setWind((tonumber(direction) or 0.0) + 0.0, (tonumber(speed) or 0.0) + 0.0, frozen == true)
 end)
 
-AddEventHandler("luman-weather:resetWind", function()
+RegisterNetEvent("luman-weather:resetWind", function()
     if not isAllowed(source, "wind") then return end
     resetWind()
 end)
 
-AddEventHandler("luman-weather:requestUpdatedForecast", function()
+RegisterNetEvent("luman-weather:requestUpdatedForecast", function()
     TriggerClientEvent("luman-weather:updateForecast", source, createForecast())
 end)
 
-AddEventHandler("luman-weather:requestUpdatedAdminUi", function()
+RegisterNetEvent("luman-weather:requestUpdatedAdminUi", function()
     if not isAllowed(source, "weatherui") then return end
 
     updateTime()
@@ -594,7 +577,7 @@ end)
 
 -- Read-only diagnostics: sends the authoritative state so the client can
 -- compare it against its locally computed state (/synccheck, /weathertest)
-AddEventHandler("luman-weather:requestSyncCheck", function()
+RegisterNetEvent("luman-weather:requestSyncCheck", function()
     updateTime()
     debugLog(string.format("Sync check requested by player %s: time %s, weather %s", tostring(source), FormatTime(currentTime), currentWeather))
     TriggerClientEvent("luman-weather:syncCheckResult", source, currentTime, currentWeather, currentWindDirection, currentWindSpeed, currentTimescale, timeIsFrozen)
@@ -602,7 +585,7 @@ end)
 
 -- A client is ready: anchor its clock and send the current weather and wind.
 -- syncBaseTime carries the timescale and freeze flag, so nothing else is needed.
-AddEventHandler("luman-weather:init", function()
+RegisterNetEvent("luman-weather:init", function()
     syncStats.playerInits = syncStats.playerInits + 1
     syncStats.lastPlayerInit = os.time()
     debugLog(string.format("Player %d initialized weather sync", source))

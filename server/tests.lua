@@ -16,8 +16,7 @@ end
 local log = LumanWeather.log
 local pendingClientTests = {}
 
-RegisterNetEvent("luman-weather:clientTestResult")
-AddEventHandler("luman-weather:clientTestResult", function(line)
+RegisterNetEvent("luman-weather:clientTestResult", function(line)
     local src = tonumber(source)
 
     -- Only echo results from players we actually asked to run tests

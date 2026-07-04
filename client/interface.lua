@@ -69,12 +69,9 @@ local function updateForecast(forecast)
     })
 end
 
-RegisterNetEvent("luman-weather:toggleForecast")
-RegisterNetEvent("luman-weather:updateForecast")
+RegisterNetEvent("luman-weather:updateForecast", updateForecast)
 
-AddEventHandler("luman-weather:updateForecast", updateForecast)
-
-AddEventHandler("luman-weather:toggleForecast", function()
+RegisterNetEvent("luman-weather:toggleForecast", function()
     forecastIsDisplayed = not forecastIsDisplayed
 
     CreateThread(function()
@@ -111,10 +108,7 @@ local function buildAdminUiMessage(action, weather, time, timescale, windDirecti
     }
 end
 
-RegisterNetEvent("luman-weather:openAdminUi")
-RegisterNetEvent("luman-weather:updateAdminUi")
-
-AddEventHandler("luman-weather:openAdminUi", function(weather, time, timescale, windDirection, windSpeed, syncDelay)
+RegisterNetEvent("luman-weather:openAdminUi", function(weather, time, timescale, windDirection, windSpeed, syncDelay)
     adminUiIsOpen = true
 
     SetNuiFocus(true, true)
@@ -128,7 +122,7 @@ AddEventHandler("luman-weather:openAdminUi", function(weather, time, timescale, 
     end)
 end)
 
-AddEventHandler("luman-weather:updateAdminUi", function(weather, time, timescale, windDirection, windSpeed, syncDelay)
+RegisterNetEvent("luman-weather:updateAdminUi", function(weather, time, timescale, windDirection, windSpeed, syncDelay)
     SendNUIMessage(buildAdminUiMessage("updateAdminUi", weather, time, timescale, windDirection, windSpeed, syncDelay))
 end)
 

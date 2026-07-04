@@ -398,18 +398,7 @@ end
 -- NETWORK EVENTS
 -- ============================================================================
 
-RegisterNetEvent("luman-weather:changeWeather")
-RegisterNetEvent("luman-weather:changeTime")
-RegisterNetEvent("luman-weather:changeTimescale")
-RegisterNetEvent("luman-weather:changeWind")
-RegisterNetEvent("luman-weather:syncBaseTime")
-RegisterNetEvent("luman-weather:syncCheckResult")
-RegisterNetEvent("luman-weather:toggleSync")
-RegisterNetEvent("luman-weather:setSyncEnabled")
-RegisterNetEvent("luman-weather:setMyTime")
-RegisterNetEvent("luman-weather:setMyWeather")
-
-AddEventHandler("luman-weather:changeWeather", function(weather, transitionTime, permanentSnow)
+RegisterNetEvent("luman-weather:changeWeather", function(weather, transitionTime, permanentSnow)
     if not syncEnabled then
         return
     end
@@ -424,7 +413,7 @@ AddEventHandler("luman-weather:changeWeather", function(weather, transitionTime,
     applyServerWeather(transitionTime)
 end)
 
-AddEventHandler("luman-weather:changeTime", function(day, hour, minute, second, transitionTime, freezeTime)
+RegisterNetEvent("luman-weather:changeTime", function(day, hour, minute, second, transitionTime, freezeTime)
     if not syncEnabled then
         return
     end
@@ -442,7 +431,7 @@ AddEventHandler("luman-weather:changeTime", function(day, hour, minute, second, 
     setTimeNative(hour, minute, second, transitionTime)
 end)
 
-AddEventHandler("luman-weather:syncBaseTime", function(gameTime, timescale, frozen)
+RegisterNetEvent("luman-weather:syncBaseTime", function(gameTime, timescale, frozen)
     if not syncEnabled then
         return
     end
@@ -457,7 +446,7 @@ AddEventHandler("luman-weather:syncBaseTime", function(gameTime, timescale, froz
     setTimeNative(hour, minute, second, 0)
 end)
 
-AddEventHandler("luman-weather:changeTimescale", function(scale)
+RegisterNetEvent("luman-weather:changeTimescale", function(scale)
     if not syncEnabled then
         return
     end
@@ -474,7 +463,7 @@ AddEventHandler("luman-weather:changeTimescale", function(scale)
     currentTimescale = scale
 end)
 
-AddEventHandler("luman-weather:changeWind", function(direction, speed)
+RegisterNetEvent("luman-weather:changeWind", function(direction, speed)
     debugStats.windSyncCount = debugStats.windSyncCount + 1
     debugStats.lastWindSync = GetGameTimer()
     debugLog(string.format("Wind change: %.1f°, speed: %.1f", direction, speed))
@@ -485,7 +474,7 @@ AddEventHandler("luman-weather:changeWind", function(direction, speed)
     applyServerWind()
 end)
 
-AddEventHandler("luman-weather:syncCheckResult", function(svTime, svWeather, svWindDirection, svWindSpeed, svTimescale, svFrozen)
+RegisterNetEvent("luman-weather:syncCheckResult", function(svTime, svWeather, svWindDirection, svWindSpeed, svTimescale, svFrozen)
     if pendingSyncCheck then
         local deliver = pendingSyncCheck
         pendingSyncCheck = nil
@@ -500,10 +489,10 @@ AddEventHandler("luman-weather:syncCheckResult", function(svTime, svWeather, svW
     end
 end)
 
-AddEventHandler("luman-weather:toggleSync", toggleSync)
-AddEventHandler("luman-weather:setSyncEnabled", setSyncEnabled)
-AddEventHandler("luman-weather:setMyWeather", setMyWeather)
-AddEventHandler("luman-weather:setMyTime", setMyTime)
+RegisterNetEvent("luman-weather:toggleSync", toggleSync)
+RegisterNetEvent("luman-weather:setSyncEnabled", setSyncEnabled)
+RegisterNetEvent("luman-weather:setMyWeather", setMyWeather)
+RegisterNetEvent("luman-weather:setMyTime", setMyTime)
 
 -- ============================================================================
 -- INITIALIZATION & LOCAL LOOPS

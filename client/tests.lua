@@ -347,8 +347,7 @@ RegisterCommand("weathertest", function(source, args, raw)
     startTestSuite(args[1] == "full", false)
 end, false)
 
-RegisterNetEvent("luman-weather:runClientTests")
-AddEventHandler("luman-weather:runClientTests", function(full)
+RegisterNetEvent("luman-weather:runClientTests", function(full)
     startTestSuite(full, true)
 end)
 
