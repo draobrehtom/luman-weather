@@ -210,8 +210,12 @@ local function applyServerWeather(transitionTime)
     local translatedWeather = translateWeatherForRegion(serverWeather, x, y, z)
 
     if not currentWeather then
-        -- First application after join or re-enabling sync: apply instantly
-        transitionTime = 1.0
+        -- First application after join or re-enabling sync: snap in quickly,
+        -- unless the caller explicitly asked for an instant (0) transition
+        -- (photo/preview restore needs no visible weather fade).
+        if transitionTime > 0.0 then
+            transitionTime = 1.0
+        end
         setSnowCoverage(0)
         snowOnGround = false
     end
