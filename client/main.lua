@@ -41,6 +41,13 @@ local timeIsFrozen = false
 local syncEnabled = true
 local initialized = false
 
+-- Personal overrides (setMyTime/setMyWeather). Stored so the local loops keep
+-- re-asserting them while sync is off: a one-shot native call is silently lost
+-- if made before the session is live (e.g. a zone firing during character
+-- select) or clobbered by a session transition.
+local myTimeOverride = nil    -- {h, m, s, holdUntil}
+local myWeatherOverride = nil -- {weather, permanentSnow}
+
 -- When set, the next syncCheckResult is delivered to this callback
 -- (used by /synccheck and the test suite) instead of being ignored
 local pendingSyncCheck = nil
@@ -287,6 +294,8 @@ local function toggleSync()
     if syncEnabled then
         -- Re-request the full state from the server: local overrides may have
         -- desynced us, and no periodic sync exists to catch us up
+        myTimeOverride = nil
+        myWeatherOverride = nil
         TriggerServerEvent("luman-weather:init")
     end
 
@@ -309,6 +318,8 @@ local function setMyWeather(weather, transition, permanentSnow)
         toggleSync()
     end
 
+    myWeatherOverride = { weather = weather, permanentSnow = permanentSnow }
+
     if transition <= 0.0 then
         transition = 0.1
     end
@@ -328,6 +339,10 @@ local function setMyTime(h, m, s, t)
     if syncEnabled then
         toggleSync()
     end
+
+    -- holdUntil: don't let the re-assert loop (transition 0) snap the clock
+    -- while the requested transition is still animating
+    myTimeOverride = { h = h, m = m, s = s, holdUntil = GetGameTimer() + (t or 0) }
 
     setTimeNative(h, m, s, t)
 end
@@ -513,10 +528,16 @@ local function init()
     TriggerServerEvent("luman-weather:init")
 
     -- Local clock: advances game time from the shared network clock without
-    -- any server communication
+    -- any server communication. With sync off it keeps re-asserting the
+    -- personal override instead — the clock override does not survive session
+    -- transitions on its own.
     CreateThread(function()
         while true do
-            if syncEnabled and not timeIsFrozen and baseNetworkTime > 0 then
+            if not syncEnabled then
+                if myTimeOverride and GetGameTimer() >= myTimeOverride.holdUntil then
+                    setTimeNative(myTimeOverride.h, myTimeOverride.m, myTimeOverride.s, 0)
+                end
+            elseif not timeIsFrozen and baseNetworkTime > 0 then
                 local scale = currentTimescale == 0 and 1 or currentTimescale
 
                 if scale > 0 then
@@ -531,13 +552,17 @@ local function init()
     end)
 
     -- Region/altitude monitor: re-applies the last known server weather and
-    -- wind as the player moves, entirely locally (no network traffic)
+    -- wind as the player moves, entirely locally (no network traffic).
+    -- With sync off, re-asserts the personal weather override the same way.
     CreateThread(function()
         while true do
             Wait(5000)
             if syncEnabled then
                 applyServerWeather(10.0)
                 applyServerWind()
+            elseif myWeatherOverride then
+                setWeatherNative(myWeatherOverride.weather, 10.0)
+                setSnowCoverage(myWeatherOverride.permanentSnow and 3 or 0)
             end
         end
     end)

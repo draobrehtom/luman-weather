@@ -5,7 +5,7 @@ rdr3_warning "I acknowledge that this is a prerelease build of RedM, and I am aw
 name "luman-weather"
 author "Luman"
 description "Luman Weather - optimized time and weather synchronization for RedM"
-version "2.0.1"
+version "2.0.2"
 
 ui_page "ui/index.html"
 
